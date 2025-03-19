@@ -32,7 +32,6 @@
     .logo-container img {
       max-width: 120px;
     }
-
     h1 {
       text-align: center;
       color: #37393d;
@@ -101,7 +100,7 @@
       text-align: center;
       color: #ff0000;
       margin-top: 10px;
-      display: none; /* Solo se muestra cuando no hay coincidencias */
+      display: none;
     }
 
     /* =======================
@@ -110,9 +109,8 @@
     .dashboard-container {
       max-width: 95%;
       margin: 0 auto 30px auto;
-      display: none; /* Aparece tras login */
+      display: none;
     }
-
     /* MENSAJE DE BIENVENIDA */
     .welcome-message {
       text-align: center;
@@ -159,7 +157,7 @@
     .stats-item h3 {
       margin-bottom: 8px;
       font-size: 1rem;
-      color: #6531bf; /* Morado secundario */
+      color: #6531bf;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -235,7 +233,7 @@
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
       overflow-x: auto;
-      display: none; /* Se muestra tras login + datos */
+      display: none;
     }
     table {
       width: 100%;
@@ -322,10 +320,8 @@
 
   <!-- CONTENEDOR DEL DASHBOARD (APARECE DESPUÉS DE LOGIN) -->
   <div class="dashboard-container" id="dashboardContainer">
-
-    <!-- MENSAJE DE BIENVENIDA (SE INSERTA AQUÍ) -->
+    <!-- MENSAJE DE BIENVENIDA -->
     <div class="welcome-message" id="welcomeMessage"></div>
-    <!-- FIN MENSAJE BIENVENIDA -->
 
     <!-- SECCIÓN DE STATS -->
     <div class="stats-container">
@@ -337,44 +333,34 @@
 
     <!-- SECCIÓN DE FILTROS -->
     <div class="filters-container">
-      <!-- 1) Estatus -->
       <div class="filter-group">
         <label for="filterEstatus">Filtrar por Estatus:</label>
         <select id="filterEstatus">
           <option value="Todos">Todos</option>
         </select>
       </div>
-
-      <!-- 2) Forma de Pago -->
       <div class="filter-group">
         <label for="filterFormaCobro">Filtrar por Forma de Pago:</label>
         <select id="filterFormaCobro">
           <option value="Todos">Todos</option>
         </select>
       </div>
-
-      <!-- 3) Conducto de Cobro -->
       <div class="filter-group">
         <label for="filterConductoCobro">Filtrar por Conducto de Cobro:</label>
         <select id="filterConductoCobro">
           <option value="Todos">Todos</option>
         </select>
       </div>
-
-      <!-- 4) Producto -->
       <div class="filter-group">
         <label for="filterProducto">Filtrar por Producto:</label>
         <select id="filterProducto">
           <option value="Todos">Todos</option>
         </select>
       </div>
-
-      <!-- 5) Póliza exacta -->
       <div class="filter-group">
         <label for="filterPoliza">Buscar Póliza (exacto):</label>
         <input type="text" id="filterPoliza" placeholder="Ej. 123456" />
       </div>
-
       <button class="apply-filters-btn" id="applyFiltersBtn">Aplicar Filtros</button>
     </div>
   </div>
@@ -382,7 +368,7 @@
   <!-- CONTENEDOR DE LA TABLA (OCULTO POR DEFECTO) -->
   <div class="table-container" id="tableContainer">
     <table id="dataTable">
-      <!-- thead y tbody dinámicos -->
+      <!-- thead y tbody se generan dinámicamente -->
     </table>
   </div>
 
@@ -390,13 +376,15 @@
     // URL de tu Google Sheet en CSV (ajusta si lo requieres):
     const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJXJVUj3lKzOGw0DQovIXuFBcONwFCsAB4-vI9XUzLry_R1iaM0QmXp4HqJD2GmVS0ML8ZFIJRiwrH/pub?gid=0&single=true&output=csv";
 
-    // Columnas a mostrar
+    /*
+      Array de columnas a mostrar (se ha quitado "ULTIMO PAGO REALIZADO")
+      Orden: POLIZA, CLIENTE, RFC, INICIO DE VIGENCIA, PRODUCTO, ESTATUS, FORMA DE PAGO, CONDUCTO DE COBRO, PRIMA MODAL, PNA, MONEDA
+    */
     const columnsToDisplay = [
       "POLIZA",
       "CLIENTE",
       "RFC",
       "INICIO DE VIGENCIA",
-      "ULTIMO PAGO REALIZADO",
       "PRODUCTO",
       "ESTATUS",
       "FORMA DE PAGO",
@@ -406,19 +394,20 @@
       "MONEDA"
     ];
 
-    // Diccionario para renombrar encabezados
+    // Diccionario para renombrar encabezados:
+    // Se cambia "PRIMA MODAL" a "Prima de Acuerdo a Forma de Pago"
+    // y "PNA" a "Prima Anual"
     const columnHeaders = {
-      "POLIZA": "POLIZA",
+      "POLIZA": "PÓLIZA",
       "CLIENTE": "CLIENTE",
       "RFC": "RFC",
       "INICIO DE VIGENCIA": "INICIO DE VIGENCIA",
-      "ULTIMO PAGO REALIZADO": "ULTIMO PAGO REALIZADO",
       "PRODUCTO": "PRODUCTO",
       "ESTATUS": "ESTATUS",
       "FORMA DE PAGO": "FORMA DE PAGO",
       "CONDUCTO DE COBRO": "CONDUCTO DE COBRO",
-      "PRIMA MODAL": "PRIMA MODAL",
-      "PNA": "PNA",
+      "PRIMA MODAL": "Prima de Acuerdo a Forma de Pago",
+      "PNA": "Prima Anual",
       "MONEDA": "MONEDA"
     };
 
@@ -443,7 +432,7 @@
     const statsOverview = document.getElementById("statsOverview");
 
     // Variables para almacenar datos
-    let userData = [];     // Filas que corresponden a la contraseña ingresada
+    let userData = [];     // Filas correspondientes a la contraseña ingresada
     let filteredData = []; // Filas luego de aplicar filtros
 
     // Al hacer clic en "Ingresar", cargamos y filtramos la información
@@ -477,7 +466,7 @@
           // Ocultamos el mensaje de error
           errorMsg.style.display = "none";
 
-          // Muestra mensaje de bienvenida
+          // Mensaje de bienvenida (usando la columna "AGENTE" o "NOM_AGENTE")
           const agentName = userData[0]["AGENTE"] || userData[0]["NOM_AGENTE"] || "Agente";
           welcomeMessage.textContent = `BIENVENID@ ${agentName}`;
 
@@ -487,9 +476,9 @@
           fillSelectOptions(userData, "CONDUCTO DE COBRO", filterConductoCobro);
           fillSelectOptions(userData, "PRODUCTO", filterProducto);
 
-          // Por defecto, no aplicamos ningún filtro extra
-          filteredData = userData.slice(); // Copia
-          updateDashboard(); // Mostramos dashboard y tabla
+          // Por defecto, sin filtros adicionales
+          filteredData = userData.slice();
+          updateDashboard();
         },
         error: function(err) {
           console.error("Error al parsear el CSV: ", err);
@@ -499,36 +488,26 @@
       });
     });
 
-    // Cuando se hace clic en "Aplicar Filtros"
+    // Al hacer clic en "Aplicar Filtros"
     applyFiltersBtn.addEventListener("click", () => {
       filteredData = userData.slice();
 
-      // Filtro por ESTATUS
       if (filterEstatus.value !== "Todos") {
         filteredData = filteredData.filter(row => row["ESTATUS"] === filterEstatus.value);
       }
-
-      // Filtro por FORMA DE PAGO
       if (filterFormaCobro.value !== "Todos") {
         filteredData = filteredData.filter(row => row["FORMA DE PAGO"] === filterFormaCobro.value);
       }
-
-      // Filtro por CONDUCTO DE COBRO
       if (filterConductoCobro.value !== "Todos") {
         filteredData = filteredData.filter(row => row["CONDUCTO DE COBRO"] === filterConductoCobro.value);
       }
-
-      // Filtro por PRODUCTO
       if (filterProducto.value !== "Todos") {
         filteredData = filteredData.filter(row => row["PRODUCTO"] === filterProducto.value);
       }
-
-      // Filtro por Póliza exacta
       const polizaQuery = filterPoliza.value.trim();
       if (polizaQuery !== "") {
         filteredData = filteredData.filter(row => row["POLIZA"] === polizaQuery);
       }
-
       updateDashboard();
     });
 
@@ -536,11 +515,9 @@
     function fillSelectOptions(dataArray, columnName, selectElement) {
       const uniqueValues = [...new Set(dataArray.map(row => row[columnName] || "").filter(Boolean))];
       uniqueValues.sort();
-
       const defaultOption = selectElement.querySelector("option[value='Todos']");
       selectElement.innerHTML = "";
       selectElement.appendChild(defaultOption);
-
       uniqueValues.forEach(val => {
         const option = document.createElement("option");
         option.value = val;
@@ -549,21 +526,15 @@
       });
     }
 
-    // Función principal para actualizar todo el dashboard (estadísticas y tabla)
+    // Actualiza el dashboard (tabla y estadísticas)
     function updateDashboard() {
       dashboardContainer.style.display = "block";
       tableContainer.style.display = "block";
-
-      // Actualizar tabla
       updateTable(filteredData);
-
-      // Actualizar estadísticas
       updateStats(filteredData);
     }
 
-    // =======================
-    //   ACTUALIZAR TABLA
-    // =======================
+    // Actualiza la tabla
     function updateTable(rows) {
       let theadHTML = "<thead><tr>";
       columnsToDisplay.forEach(col => {
@@ -581,22 +552,16 @@
         tbodyHTML += "</tr>";
       });
       tbodyHTML += "</tbody>";
-
       dataTable.innerHTML = theadHTML + tbodyHTML;
     }
 
-    // =======================
-    //   ACTUALIZAR STATS
-    // =======================
+    // Actualiza las estadísticas (Tarjetas: Total, Cancelled, Inforce, Otros)
     function updateStats(rows) {
       statsOverview.innerHTML = "";
-
       const totalPolizas = rows.length;
-
       let cancelledCount = 0;
       let inforceCount = 0;
       let otrosCount = 0;
-
       rows.forEach(r => {
         const st = (r["ESTATUS"] || "").trim().toUpperCase();
         if (st === "CANCELLED") {
@@ -608,40 +573,24 @@
         }
       });
 
-      // Tarjeta: Total
       const totalItem = document.createElement("div");
       totalItem.className = "stats-item";
-      totalItem.innerHTML = `
-        <h3>Total de Pólizas</h3>
-        <p>${totalPolizas}</p>
-      `;
+      totalItem.innerHTML = `<h3>Total de Pólizas</h3><p>${totalPolizas}</p>`;
       statsOverview.appendChild(totalItem);
 
-      // Tarjeta: CANCELLED
       const cancelledItem = document.createElement("div");
       cancelledItem.className = "stats-item";
-      cancelledItem.innerHTML = `
-        <h3>Cancelled</h3>
-        <p>${cancelledCount}</p>
-      `;
+      cancelledItem.innerHTML = `<h3>Cancelled</h3><p>${cancelledCount}</p>`;
       statsOverview.appendChild(cancelledItem);
 
-      // Tarjeta: INFORCE
       const inforceItem = document.createElement("div");
       inforceItem.className = "stats-item";
-      inforceItem.innerHTML = `
-        <h3>Inforce</h3>
-        <p>${inforceCount}</p>
-      `;
+      inforceItem.innerHTML = `<h3>Inforce</h3><p>${inforceCount}</p>`;
       statsOverview.appendChild(inforceItem);
 
-      // Tarjeta: OTROS
       const otrosItem = document.createElement("div");
       otrosItem.className = "stats-item";
-      otrosItem.innerHTML = `
-        <h3>Otros</h3>
-        <p>${otrosCount}</p>
-      `;
+      otrosItem.innerHTML = `<h3>Otros</h3><p>${otrosCount}</p>`;
       statsOverview.appendChild(otrosItem);
     }
   </script>
