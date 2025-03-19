@@ -478,8 +478,8 @@
 
           // Llenamos los <select> de filtros con opciones únicas
           fillSelectOptions(userData, "ESTATUS", filterEstatus);
-          fillSelectOptions(userData, "FORMA_DE_PAGO", filterFormaCobro);
-          fillSelectOptions(userData, "PERIOCIDAD_DE_COBRO", filterPeriocidad);
+          fillSelectOptions(userData, "FORMA DE PAGO", filterFormaCobro);
+          fillSelectOptions(userData, "CONDUCTO DE COBRO", filterPeriocidad);
           fillSelectOptions(userData, "PRODUCTO", filterProducto);
 
           // Por defecto, no aplicamos ningún filtro extra
@@ -503,12 +503,12 @@
         filteredData = filteredData.filter(row => row["ESTATUS"] === filterEstatus.value);
       }
 
-      // Filtro por FORMA_DE_PAGO
+      // Filtro por FORMA DE PAGO
       if (filterFormaCobro.value !== "Todos") {
         filteredData = filteredData.filter(row => row["FORMA_DE_PAGO"] === filterFormaCobro.value);
       }
 
-      // Filtro por PERIOCIDAD_DE_COBRO
+      // Filtro por CONDUCTO DE COBRO
       if (filterPeriocidad.value !== "Todos") {
         filteredData = filteredData.filter(row => row["PERIOCIDAD_DE_COBRO"] === filterPeriocidad.value);
       }
