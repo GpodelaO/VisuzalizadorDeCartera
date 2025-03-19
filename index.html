@@ -373,13 +373,10 @@
   </div>
 
   <script>
-    // URL de tu Google Sheet en CSV (ajusta si lo requieres):
+    // URL de tu Google Sheet en CSV
     const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJXJVUj3lKzOGw0DQovIXuFBcONwFCsAB4-vI9XUzLry_R1iaM0QmXp4HqJD2GmVS0ML8ZFIJRiwrH/pub?gid=0&single=true&output=csv";
 
-    /*
-      Array de columnas a mostrar (se ha quitado "ULTIMO PAGO REALIZADO")
-      Orden: POLIZA, CLIENTE, RFC, INICIO DE VIGENCIA, PRODUCTO, ESTATUS, FORMA DE PAGO, CONDUCTO DE COBRO, PRIMA MODAL, PNA, MONEDA
-    */
+    // Columnas a mostrar
     const columnsToDisplay = [
       "POLIZA",
       "CLIENTE",
@@ -394,9 +391,7 @@
       "MONEDA"
     ];
 
-    // Diccionario para renombrar encabezados:
-    // Se cambia "PRIMA MODAL" a "Prima de Acuerdo a Forma de Pago"
-    // y "PNA" a "Prima Anual"
+    // Diccionario para renombrar encabezados
     const columnHeaders = {
       "POLIZA": "PÓLIZA",
       "CLIENTE": "CLIENTE",
@@ -411,7 +406,7 @@
       "MONEDA": "MONEDA"
     };
 
-    // Referencias a elementos del DOM
+    // Referencias DOM
     const ingresarBtn = document.getElementById("ingresarBtn");
     const userPass = document.getElementById("userPass");
     const tableContainer = document.getElementById("tableContainer");
@@ -431,11 +426,11 @@
     // Stats
     const statsOverview = document.getElementById("statsOverview");
 
-    // Variables para almacenar datos
-    let userData = [];     // Filas correspondientes a la contraseña ingresada
-    let filteredData = []; // Filas luego de aplicar filtros
+    // Variables
+    let userData = [];
+    let filteredData = [];
 
-    // Al hacer clic en "Ingresar", cargamos y filtramos la información
+    // Al hacer clic en "Ingresar"
     ingresarBtn.addEventListener("click", () => {
       const enteredPass = userPass.value.trim();
       if (!enteredPass) {
@@ -452,7 +447,6 @@
         complete: function(results) {
           const data = results.data;
 
-          // Filtrar filas con la contraseña ingresada
           userData = data.filter(row => row["Contraseña"] === enteredPass);
 
           if (userData.length === 0) {
@@ -463,20 +457,16 @@
             return;
           }
 
-          // Ocultamos el mensaje de error
           errorMsg.style.display = "none";
 
-          // Mensaje de bienvenida (usando la columna "AGENTE" o "NOM_AGENTE")
           const agentName = userData[0]["AGENTE"] || userData[0]["NOM_AGENTE"] || "Agente";
           welcomeMessage.textContent = `BIENVENID@ ${agentName}`;
 
-          // Llenamos los <select> de filtros con opciones únicas
           fillSelectOptions(userData, "ESTATUS", filterEstatus);
           fillSelectOptions(userData, "FORMA DE PAGO", filterFormaCobro);
           fillSelectOptions(userData, "CONDUCTO DE COBRO", filterConductoCobro);
           fillSelectOptions(userData, "PRODUCTO", filterProducto);
 
-          // Por defecto, sin filtros adicionales
           filteredData = userData.slice();
           updateDashboard();
         },
@@ -511,7 +501,7 @@
       updateDashboard();
     });
 
-    // Función para llenar un <select> con opciones únicas
+    // Llenar <select> con valores únicos
     function fillSelectOptions(dataArray, columnName, selectElement) {
       const uniqueValues = [...new Set(dataArray.map(row => row[columnName] || "").filter(Boolean))];
       uniqueValues.sort();
@@ -526,7 +516,7 @@
       });
     }
 
-    // Actualiza el dashboard (tabla y estadísticas)
+    // Actualizar Dashboard
     function updateDashboard() {
       dashboardContainer.style.display = "block";
       tableContainer.style.display = "block";
@@ -534,7 +524,7 @@
       updateStats(filteredData);
     }
 
-    // Actualiza la tabla
+    // Actualizar la tabla
     function updateTable(rows) {
       let theadHTML = "<thead><tr>";
       columnsToDisplay.forEach(col => {
@@ -555,44 +545,67 @@
       dataTable.innerHTML = theadHTML + tbodyHTML;
     }
 
-    // Actualiza las estadísticas (Tarjetas: Total, Cancelled, Inforce, Otros)
+    // =======================
+    //   ACTUALIZAR STATS
+    // =======================
     function updateStats(rows) {
       statsOverview.innerHTML = "";
+
       const totalPolizas = rows.length;
-      let cancelledCount = 0;
-      let inforceCount = 0;
+
+      // CAMBIAMOS "CANCELLED" -> "Canceladas" y "INFORCE" -> "Vigentes"
+      let canceladasCount = 0;
+      let vigentesCount = 0;
       let otrosCount = 0;
+
       rows.forEach(r => {
         const st = (r["ESTATUS"] || "").trim().toUpperCase();
-        if (st === "CANCELLED") {
-          cancelledCount++;
-        } else if (st === "INFORCE") {
-          inforceCount++;
+        if (st === "CANCELADA") {
+          canceladasCount++;
+        } else if (st === "VIGENTES") {
+          vigentesCount++;
         } else {
           otrosCount++;
         }
       });
 
+      // Tarjeta: TOTAL
       const totalItem = document.createElement("div");
       totalItem.className = "stats-item";
-      totalItem.innerHTML = `<h3>Total de Pólizas</h3><p>${totalPolizas}</p>`;
+      totalItem.innerHTML = `
+        <h3>Total de Pólizas</h3>
+        <p>${totalPolizas}</p>
+      `;
       statsOverview.appendChild(totalItem);
 
-      const cancelledItem = document.createElement("div");
-      cancelledItem.className = "stats-item";
-      cancelledItem.innerHTML = `<h3>Cancelled</h3><p>${cancelledCount}</p>`;
-      statsOverview.appendChild(cancelledItem);
+      // Tarjeta: CANCELADAS
+      const canceladasItem = document.createElement("div");
+      canceladasItem.className = "stats-item";
+      canceladasItem.innerHTML = `
+        <h3>Canceladas</h3>
+        <p>${canceladasCount}</p>
+      `;
+      statsOverview.appendChild(canceladasItem);
 
-      const inforceItem = document.createElement("div");
-      inforceItem.className = "stats-item";
-      inforceItem.innerHTML = `<h3>Inforce</h3><p>${inforceCount}</p>`;
-      statsOverview.appendChild(inforceItem);
+      // Tarjeta: VIGENTES
+      const vigentesItem = document.createElement("div");
+      vigentesItem.className = "stats-item";
+      vigentesItem.innerHTML = `
+        <h3>Vigentes</h3>
+        <p>${vigentesCount}</p>
+      `;
+      statsOverview.appendChild(vigentesItem);
 
+      // Tarjeta: OTROS
       const otrosItem = document.createElement("div");
       otrosItem.className = "stats-item";
-      otrosItem.innerHTML = `<h3>Otros</h3><p>${otrosCount}</p>`;
+      otrosItem.innerHTML = `
+        <h3>Otros</h3>
+        <p>${otrosCount}</p>
+      `;
       statsOverview.appendChild(otrosItem);
     }
   </script>
 </body>
 </html>
+
