@@ -503,12 +503,12 @@
         filteredData = filteredData.filter(row => row["ESTATUS"] === filterEstatus.value);
       }
 
-      // Filtro por FORMA DE PAGO
+      // Filtro por FORMA_DE_PAGO
       if (filterFormaCobro.value !== "Todos") {
         filteredData = filteredData.filter(row => row["FORMA_DE_PAGO"] === filterFormaCobro.value);
       }
 
-      // Filtro por CONDUCTO DE COBRO
+      // Filtro por PERIOCIDAD_DE_COBRO
       if (filterPeriocidad.value !== "Todos") {
         filteredData = filteredData.filter(row => row["PERIOCIDAD_DE_COBRO"] === filterPeriocidad.value);
       }
