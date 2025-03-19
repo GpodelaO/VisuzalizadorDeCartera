@@ -362,6 +362,11 @@
         <input type="text" id="filterPoliza" placeholder="Ej. 123456" />
       </div>
       <button class="apply-filters-btn" id="applyFiltersBtn">Aplicar Filtros</button>
+
+      <!-- BOTÓN PARA DESCARGAR LA TABLA -->
+      <button class="apply-filters-btn" id="downloadBtn" style="margin-left:10px;">
+        Descargar Excel
+      </button>
     </div>
   </div>
 
@@ -425,6 +430,9 @@
 
     // Stats
     const statsOverview = document.getElementById("statsOverview");
+
+    // BOTÓN DE DESCARGA
+    const downloadBtn = document.getElementById("downloadBtn");
 
     // Variables
     let userData = [];
@@ -501,6 +509,42 @@
       updateDashboard();
     });
 
+    // ====== NUEVA FUNCIÓN: DESCARGAR LA TABLA COMO CSV ======
+    downloadBtn.addEventListener("click", () => {
+      downloadCurrentDataAsCSV();
+    });
+
+    function downloadCurrentDataAsCSV() {
+      // 1) Construimos la primera fila con los encabezados
+      let csvContent = columnsToDisplay
+        .map(col => columnHeaders[col] || col)
+        .join(",") + "\n";
+
+      // 2) Agregamos cada fila de datos filtrados
+      filteredData.forEach(row => {
+        const rowStr = columnsToDisplay
+          .map(col => (row[col] || "").replace(/,/g, " ")) // Reemplaza comas en celdas
+          .join(",");
+        csvContent += rowStr + "\n";
+      });
+
+      // 3) Creamos un Blob con el contenido CSV
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      // 4) Creamos un enlace temporal para forzar la descarga
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "cartera.csv");
+      document.body.appendChild(link);
+      link.click();
+
+      // 5) Limpiamos
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+    // =========================================================
+
     // Llenar <select> con valores únicos
     function fillSelectOptions(dataArray, columnName, selectElement) {
       const uniqueValues = [...new Set(dataArray.map(row => row[columnName] || "").filter(Boolean))];
@@ -545,31 +589,27 @@
       dataTable.innerHTML = theadHTML + tbodyHTML;
     }
 
-    // =======================
-    //   ACTUALIZAR STATS
-    // =======================
+    // Actualizar estadísticas
     function updateStats(rows) {
       statsOverview.innerHTML = "";
 
       const totalPolizas = rows.length;
 
-      // CAMBIAMOS "CANCELLED" -> "Canceladas" y "INFORCE" -> "Vigentes"
       let canceladasCount = 0;
       let vigentesCount = 0;
       let otrosCount = 0;
 
       rows.forEach(r => {
         const st = (r["ESTATUS"] || "").trim().toUpperCase();
-        if (st === "CANCELADA") {
+        if (st === "CANCELADA" || st === "CANCELLED") {
           canceladasCount++;
-        } else if (st === "VIGENTES") {
+        } else if (st === "VIGENTES" || st === "INFORCE") {
           vigentesCount++;
         } else {
           otrosCount++;
         }
       });
 
-      // Tarjeta: TOTAL
       const totalItem = document.createElement("div");
       totalItem.className = "stats-item";
       totalItem.innerHTML = `
@@ -578,7 +618,6 @@
       `;
       statsOverview.appendChild(totalItem);
 
-      // Tarjeta: CANCELADAS
       const canceladasItem = document.createElement("div");
       canceladasItem.className = "stats-item";
       canceladasItem.innerHTML = `
@@ -587,7 +626,6 @@
       `;
       statsOverview.appendChild(canceladasItem);
 
-      // Tarjeta: VIGENTES
       const vigentesItem = document.createElement("div");
       vigentesItem.className = "stats-item";
       vigentesItem.innerHTML = `
@@ -596,7 +634,6 @@
       `;
       statsOverview.appendChild(vigentesItem);
 
-      // Tarjeta: OTROS
       const otrosItem = document.createElement("div");
       otrosItem.className = "stats-item";
       otrosItem.innerHTML = `
@@ -608,4 +645,5 @@
   </script>
 </body>
 </html>
+
 
