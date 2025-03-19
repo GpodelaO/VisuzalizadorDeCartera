@@ -337,6 +337,7 @@
 
     <!-- SECCIÓN DE FILTROS -->
     <div class="filters-container">
+      <!-- 1) Estatus -->
       <div class="filter-group">
         <label for="filterEstatus">Filtrar por Estatus:</label>
         <select id="filterEstatus">
@@ -344,6 +345,7 @@
         </select>
       </div>
 
+      <!-- 2) Forma de Pago -->
       <div class="filter-group">
         <label for="filterFormaCobro">Filtrar por Forma de Pago:</label>
         <select id="filterFormaCobro">
@@ -351,13 +353,15 @@
         </select>
       </div>
 
+      <!-- 3) Conducto de Cobro -->
       <div class="filter-group">
-        <label for="filterPeriocidad">Filtrar por Conducto de Cobro:</label>
-        <select id="filterPeriocidad">
+        <label for="filterConductoCobro">Filtrar por Conducto de Cobro:</label>
+        <select id="filterConductoCobro">
           <option value="Todos">Todos</option>
         </select>
       </div>
 
+      <!-- 4) Producto -->
       <div class="filter-group">
         <label for="filterProducto">Filtrar por Producto:</label>
         <select id="filterProducto">
@@ -365,6 +369,7 @@
         </select>
       </div>
 
+      <!-- 5) Póliza exacta -->
       <div class="filter-group">
         <label for="filterPoliza">Buscar Póliza (exacto):</label>
         <input type="text" id="filterPoliza" placeholder="Ej. 123456" />
@@ -385,7 +390,7 @@
     // URL de tu Google Sheet en CSV (ajusta si lo requieres):
     const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJXJVUj3lKzOGw0DQovIXuFBcONwFCsAB4-vI9XUzLry_R1iaM0QmXp4HqJD2GmVS0ML8ZFIJRiwrH/pub?gid=0&single=true&output=csv";
 
-    // Columnas a mostrar (ajusta según tu CSV)
+    // Columnas a mostrar
     const columnsToDisplay = [
       "POLIZA",
       "CLIENTE",
@@ -429,7 +434,7 @@
     // Filtros
     const filterEstatus = document.getElementById("filterEstatus");
     const filterFormaCobro = document.getElementById("filterFormaCobro");
-    const filterPeriocidad = document.getElementById("filterPeriocidad");
+    const filterConductoCobro = document.getElementById("filterConductoCobro");
     const filterProducto = document.getElementById("filterProducto");
     const filterPoliza = document.getElementById("filterPoliza");
     const applyFiltersBtn = document.getElementById("applyFiltersBtn");
@@ -472,14 +477,14 @@
           // Ocultamos el mensaje de error
           errorMsg.style.display = "none";
 
-          // AÑADIMOS EL MENSAJE DE BIENVENIDA (ASUMIENDO COLUMNA "AGENTE" O "NOM_AGENTE")
+          // Muestra mensaje de bienvenida
           const agentName = userData[0]["AGENTE"] || userData[0]["NOM_AGENTE"] || "Agente";
-          welcomeMessage.textContent = `BIENVENIDO ${agentName}`;
+          welcomeMessage.textContent = `BIENVENID@ ${agentName}`;
 
           // Llenamos los <select> de filtros con opciones únicas
           fillSelectOptions(userData, "ESTATUS", filterEstatus);
           fillSelectOptions(userData, "FORMA DE PAGO", filterFormaCobro);
-          fillSelectOptions(userData, "CONDUCTO DE COBRO", filterPeriocidad);
+          fillSelectOptions(userData, "CONDUCTO DE COBRO", filterConductoCobro);
           fillSelectOptions(userData, "PRODUCTO", filterProducto);
 
           // Por defecto, no aplicamos ningún filtro extra
@@ -503,14 +508,14 @@
         filteredData = filteredData.filter(row => row["ESTATUS"] === filterEstatus.value);
       }
 
-      // Filtro por FORMA_DE_PAGO
+      // Filtro por FORMA DE PAGO
       if (filterFormaCobro.value !== "Todos") {
-        filteredData = filteredData.filter(row => row["FORMA_DE_PAGO"] === filterFormaCobro.value);
+        filteredData = filteredData.filter(row => row["FORMA DE PAGO"] === filterFormaCobro.value);
       }
 
-      // Filtro por PERIOCIDAD_DE_COBRO
-      if (filterPeriocidad.value !== "Todos") {
-        filteredData = filteredData.filter(row => row["PERIOCIDAD_DE_COBRO"] === filterPeriocidad.value);
+      // Filtro por CONDUCTO DE COBRO
+      if (filterConductoCobro.value !== "Todos") {
+        filteredData = filteredData.filter(row => row["CONDUCTO DE COBRO"] === filterConductoCobro.value);
       }
 
       // Filtro por PRODUCTO
@@ -642,3 +647,4 @@
   </script>
 </body>
 </html>
+
