@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Visualizador de Cartera</title>
+  <!-- Papaparse para parsear CSV de Google Sheets -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+
+  <style>
+    /* =======================
+       RESETEO BÁSICO
+       ======================= */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f8f9fa; /* Fondo gris claro */
+      color: #333;
+      line-height: 1.4;
+    }
+
+    /* =======================
+       ENCABEZADO Y TÍTULO
+       ======================= */
+    .logo-container {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .logo-container img {
+      max-width: 120px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #37393d;
+      margin-top: 10px;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    /* =======================
+       DESCRIPCIÓN
+       ======================= */
+    .info-text {
+      max-width: 800px;
+      margin: 15px auto 25px auto;
+      text-align: center;
+      color: #555;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    /* =======================
+       LOGIN: CONTRASEÑA
+       ======================= */
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .input-container label {
+      margin-bottom: 5px;
+      color: #414347;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+    .input-container input {
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 280px;
+      max-width: 90%;
+      margin-bottom: 10px;
+      font-size: 1rem;
+      transition: border 0.2s ease;
+    }
+    .input-container input:focus {
+      outline: none;
+      border-color: #3B82F6;
+    }
+    .input-container button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      background: #323539;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    .input-container button:hover {
+      background: #6531bf;
+      transform: scale(1.03);
+    }
+    .error-message {
+      text-align: center;
+      color: #ff0000;
+      margin-top: 10px;
+      display: none; /* Solo se muestra cuando no hay coincidencias */
+    }
+
+    /* =======================
+       DASHBOARD CONTAINER
+       ======================= */
+    .dashboard-container {
+      max-width: 95%;
+      margin: 0 auto 30px auto;
+      display: none; /* Aparece tras login */
+    }
+
+    /* MENSAJE DE BIENVENIDA */
+    .welcome-message {
+      text-align: center;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      color: #6531bf;
+      font-weight: 600;
+    }
+
+    /* =======================
+       STATS / RESUMEN
+       ======================= */
+    .stats-container {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .stats-container h2 {
+      margin-bottom: 10px;
+      color: #222324;
+      font-size: 1.2rem;
+      letter-spacing: 0.5px;
+    }
+    .stats-overview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .stats-item {
+      background: linear-gradient(to right, #ffffff, #f9f9fd);
+      border-radius: 10px;
+      border: 1px solid #6531bf;
+      padding: 15px;
+      flex: 1 1 180px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .stats-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .stats-item h3 {
+      margin-bottom: 8px;
+      font-size: 1rem;
+      color: #6531bf; /* Morado secundario */
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stats-item p {
+      font-size: 1.1rem;
+      color: #333;
+      font-weight: 600;
+      margin-top: 5px;
+    }
+
+    /* =======================
+       FILTROS
+       ======================= */
+    .filters-container {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 20px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: flex-end;
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .filter-group label {
+      color: #232424;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    .filter-group select,
+    .filter-group input {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      min-width: 150px;
+      font-size: 0.9rem;
+      transition: border 0.2s ease;
+    }
+    .filter-group select:focus,
+    .filter-group input:focus {
+      outline: none;
+      border-color: #202122;
+    }
+    .apply-filters-btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      background: #151617;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.3s ease;
+      height: 42px;
+      margin-top: 20px;
+      font-size: 1rem;
+    }
+    .apply-filters-btn:hover {
+      background: #6635b4;
+      transform: scale(1.03);
+    }
+
+    /* =======================
+       TABLA DE DATOS
+       ======================= */
+    .table-container {
+      max-width: 95%;
+      margin: 0 auto 40px auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      overflow-x: auto;
+      display: none; /* Se muestra tras login + datos */
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead {
+      background-color: #262628;
+      color: #fff;
+    }
+    th, td {
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 12px;
+      vertical-align: middle;
+    }
+    th {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    tr:not(:last-child) {
+      border-bottom: 1px solid #eaeaea;
+    }
+    tbody tr:hover {
+      background-color: #f5f6fa;
+    }
+
+    /* =======================
+       MEDIA QUERIES (RESPONSIVE)
+       ======================= */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.6rem;
+      }
+      .info-text {
+        font-size: 0.95rem;
+        margin: 10px auto 20px auto;
+      }
+      .stats-overview {
+        flex-direction: column;
+      }
+      .stats-item {
+        margin: 0 auto;
+        max-width: 300px;
+      }
+      .filters-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .filter-group {
+        width: 100%;
+      }
+      .apply-filters-btn {
+        width: 100%;
+      }
+      th, td {
+        font-size: 0.8rem;
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- LOGO Y TÍTULO -->
+  <div class="logo-container">
+    <img src="LOGO.png" alt="Logo Empresa" />
+  </div>
+  <h1>Visualizador de Cartera</h1>
+
+  <!-- TEXTO DE REFERENCIA O AVISO -->
+  <div class="info-text">
+    La información presentada corresponde a datos consolidados al cierre del mes anterior.
+  </div>
+
+  <!-- INPUT PARA CONTRASEÑA Y BOTÓN -->
+  <div class="input-container">
+    <label for="userPass">Introducir Contraseña:</label>
+    <input type="password" id="userPass" placeholder="Ingrese el ID del usuario" />
+    <button id="ingresarBtn">Ingresar</button>
+    <div class="error-message" id="errorMsg">
+      No se encontraron registros para esa contraseña.
+    </div>
+  </div>
+
+  <!-- CONTENEDOR DEL DASHBOARD (APARECE DESPUÉS DE LOGIN) -->
+  <div class="dashboard-container" id="dashboardContainer">
+
+    <!-- MENSAJE DE BIENVENIDA (SE INSERTA AQUÍ) -->
+    <div class="welcome-message" id="welcomeMessage"></div>
+    <!-- FIN MENSAJE BIENVENIDA -->
+
+    <!-- SECCIÓN DE STATS -->
+    <div class="stats-container">
+      <h2>Resumen de Cartera</h2>
+      <div class="stats-overview" id="statsOverview">
+        <!-- Tarjetas generadas dinámicamente (Total, Cancelled, Inforce, Otros) -->
+      </div>
+    </div>
+
+    <!-- SECCIÓN DE FILTROS -->
+    <div class="filters-container">
+      <div class="filter-group">
+        <label for="filterEstatus">Filtrar por Estatus:</label>
+        <select id="filterEstatus">
+          <option value="Todos">Todos</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filterFormaCobro">Filtrar por Forma de Cobro:</label>
+        <select id="filterFormaCobro">
+          <option value="Todos">Todos</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filterPeriocidad">Filtrar por Periocidad de Cobro:</label>
+        <select id="filterPeriocidad">
+          <option value="Todos">Todos</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filterProducto">Filtrar por Producto:</label>
+        <select id="filterProducto">
+          <option value="Todos">Todos</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filterPoliza">Buscar Póliza (exacto):</label>
+        <input type="text" id="filterPoliza" placeholder="Ej. 123456" />
+      </div>
+
+      <button class="apply-filters-btn" id="applyFiltersBtn">Aplicar Filtros</button>
+    </div>
+  </div>
+
+  <!-- CONTENEDOR DE LA TABLA (OCULTO POR DEFECTO) -->
+  <div class="table-container" id="tableContainer">
+    <table id="dataTable">
+      <!-- thead y tbody dinámicos -->
+    </table>
+  </div>
+
+  <script>
+    // URL de tu Google Sheet en CSV (ajusta si lo requieres):
+    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJXJVUj3lKzOGw0DQovIXuFBcONwFCsAB4-vI9XUzLry_R1iaM0QmXp4HqJD2GmVS0ML8ZFIJRiwrH/pub?gid=0&single=true&output=csv";
+
+    // Columnas a mostrar (ajusta según tu CSV)
+    const columnsToDisplay = [
+      "POLIZA",
+      "CLIENTE",
+      "RFC",
+      "INICIO DE VIGENCIA",
+      "ULTIMO PAGO REALIZADO",
+      "PRODUCTO",
+      "ESTATUS",
+      "FORMA DE PAGO",
+      "CONDUCTO DE COBRO",
+      "PRIMA MODAL",
+      "PNA",
+      "MONEDA"
+    ];
+
+    // Diccionario para renombrar encabezados
+    const columnHeaders = {
+      "POLIZA": "POLIZA",
+      "CLIENTE": "CLIENTE",
+      "RFC": "RFC",
+      "INICIO DE VIGENCIA": "INICIO DE VIGENCIA",
+      "ULTIMO PAGO REALIZADO": "ULTIMO PAGO REALIZADO",
+      "PRODUCTO": "PRODUCTO",
+      "ESTATUS": "ESTATUS",
+      "FORMA DE PAGO": "FORMA DE PAGO",
+      "CONDUCTO DE COBRO": "CONDUCTO DE COBRO",
+      "PRIMA MODAL": "PRIMA MODAL",
+      "PNA": "PNA",
+      "MONEDA": "MONEDA"
+    };
+
+    // Referencias a elementos del DOM
+    const ingresarBtn = document.getElementById("ingresarBtn");
+    const userPass = document.getElementById("userPass");
+    const tableContainer = document.getElementById("tableContainer");
+    const dataTable = document.getElementById("dataTable");
+    const errorMsg = document.getElementById("errorMsg");
+    const dashboardContainer = document.getElementById("dashboardContainer");
+    const welcomeMessage = document.getElementById("welcomeMessage");
+
+    // Filtros
+    const filterEstatus = document.getElementById("filterEstatus");
+    const filterFormaCobro = document.getElementById("filterFormaCobro");
+    const filterPeriocidad = document.getElementById("filterPeriocidad");
+    const filterProducto = document.getElementById("filterProducto");
+    const filterPoliza = document.getElementById("filterPoliza");
+    const applyFiltersBtn = document.getElementById("applyFiltersBtn");
+
+    // Stats
+    const statsOverview = document.getElementById("statsOverview");
+
+    // Variables para almacenar datos
+    let userData = [];     // Filas que corresponden a la contraseña ingresada
+    let filteredData = []; // Filas luego de aplicar filtros
+
+    // Al hacer clic en "Ingresar", cargamos y filtramos la información
+    ingresarBtn.addEventListener("click", () => {
+      const enteredPass = userPass.value.trim();
+      if (!enteredPass) {
+        tableContainer.style.display = "none";
+        dashboardContainer.style.display = "none";
+        errorMsg.style.display = "block";
+        errorMsg.textContent = "Por favor, ingresa una contraseña.";
+        return;
+      }
+
+      Papa.parse(sheetURL, {
+        download: true,
+        header: true,
+        complete: function(results) {
+          const data = results.data;
+
+          // Filtrar filas con la contraseña ingresada
+          userData = data.filter(row => row["Contraseña"] === enteredPass);
+
+          if (userData.length === 0) {
+            tableContainer.style.display = "none";
+            dashboardContainer.style.display = "none";
+            errorMsg.style.display = "block";
+            errorMsg.textContent = "No se encontraron registros para esa contraseña.";
+            return;
+          }
+
+          // Ocultamos el mensaje de error
+          errorMsg.style.display = "none";
+
+          // AÑADIMOS EL MENSAJE DE BIENVENIDA (ASUMIENDO COLUMNA "AGENTE" O "NOM_AGENTE")
+          const agentName = userData[0]["AGENTE"] || userData[0]["NOM_AGENTE"] || "Agente";
+          welcomeMessage.textContent = `BIENVENIDO ${agentName}`;
+
+          // Llenamos los <select> de filtros con opciones únicas
+          fillSelectOptions(userData, "ESTATUS", filterEstatus);
+          fillSelectOptions(userData, "FORMA_DE_PAGO", filterFormaCobro);
+          fillSelectOptions(userData, "PERIOCIDAD_DE_COBRO", filterPeriocidad);
+          fillSelectOptions(userData, "PRODUCTO", filterProducto);
+
+          // Por defecto, no aplicamos ningún filtro extra
+          filteredData = userData.slice(); // Copia
+          updateDashboard(); // Mostramos dashboard y tabla
+        },
+        error: function(err) {
+          console.error("Error al parsear el CSV: ", err);
+          errorMsg.style.display = "block";
+          errorMsg.textContent = "Error al cargar datos. Verifica la URL de la hoja.";
+        }
+      });
+    });
+
+    // Cuando se hace clic en "Aplicar Filtros"
+    applyFiltersBtn.addEventListener("click", () => {
+      filteredData = userData.slice();
+
+      // Filtro por ESTATUS
+      if (filterEstatus.value !== "Todos") {
+        filteredData = filteredData.filter(row => row["ESTATUS"] === filterEstatus.value);
+      }
+
+      // Filtro por FORMA_DE_PAGO
+      if (filterFormaCobro.value !== "Todos") {
+        filteredData = filteredData.filter(row => row["FORMA_DE_PAGO"] === filterFormaCobro.value);
+      }
+
+      // Filtro por PERIOCIDAD_DE_COBRO
+      if (filterPeriocidad.value !== "Todos") {
+        filteredData = filteredData.filter(row => row["PERIOCIDAD_DE_COBRO"] === filterPeriocidad.value);
+      }
+
+      // Filtro por PRODUCTO
+      if (filterProducto.value !== "Todos") {
+        filteredData = filteredData.filter(row => row["PRODUCTO"] === filterProducto.value);
+      }
+
+      // Filtro por Póliza exacta
+      const polizaQuery = filterPoliza.value.trim();
+      if (polizaQuery !== "") {
+        filteredData = filteredData.filter(row => row["POLIZA"] === polizaQuery);
+      }
+
+      updateDashboard();
+    });
+
+    // Función para llenar un <select> con opciones únicas
+    function fillSelectOptions(dataArray, columnName, selectElement) {
+      const uniqueValues = [...new Set(dataArray.map(row => row[columnName] || "").filter(Boolean))];
+      uniqueValues.sort();
+
+      const defaultOption = selectElement.querySelector("option[value='Todos']");
+      selectElement.innerHTML = "";
+      selectElement.appendChild(defaultOption);
+
+      uniqueValues.forEach(val => {
+        const option = document.createElement("option");
+        option.value = val;
+        option.textContent = val;
+        selectElement.appendChild(option);
+      });
+    }
+
+    // Función principal para actualizar todo el dashboard (estadísticas y tabla)
+    function updateDashboard() {
+      dashboardContainer.style.display = "block";
+      tableContainer.style.display = "block";
+
+      // Actualizar tabla
+      updateTable(filteredData);
+
+      // Actualizar estadísticas
+      updateStats(filteredData);
+    }
+
+    // =======================
+    //   ACTUALIZAR TABLA
+    // =======================
+    function updateTable(rows) {
+      let theadHTML = "<thead><tr>";
+      columnsToDisplay.forEach(col => {
+        const headerName = columnHeaders[col] || col;
+        theadHTML += `<th>${headerName}</th>`;
+      });
+      theadHTML += "</tr></thead>";
+
+      let tbodyHTML = "<tbody>";
+      rows.forEach(row => {
+        tbodyHTML += "<tr>";
+        columnsToDisplay.forEach(col => {
+          tbodyHTML += `<td>${row[col] || ""}</td>`;
+        });
+        tbodyHTML += "</tr>";
+      });
+      tbodyHTML += "</tbody>";
+
+      dataTable.innerHTML = theadHTML + tbodyHTML;
+    }
+
+    // =======================
+    //   ACTUALIZAR STATS
+    // =======================
+    function updateStats(rows) {
+      statsOverview.innerHTML = "";
+
+      const totalPolizas = rows.length;
+
+      let cancelledCount = 0;
+      let inforceCount = 0;
+      let otrosCount = 0;
+
+      rows.forEach(r => {
+        const st = (r["ESTATUS"] || "").trim().toUpperCase();
+        if (st === "CANCELLED") {
+          cancelledCount++;
+        } else if (st === "INFORCE") {
+          inforceCount++;
+        } else {
+          otrosCount++;
+        }
+      });
+
+      // Tarjeta: Total
+      const totalItem = document.createElement("div");
+      totalItem.className = "stats-item";
+      totalItem.innerHTML = `
+        <h3>Total de Pólizas</h3>
+        <p>${totalPolizas}</p>
+      `;
+      statsOverview.appendChild(totalItem);
+
+      // Tarjeta: CANCELLED
+      const cancelledItem = document.createElement("div");
+      cancelledItem.className = "stats-item";
+      cancelledItem.innerHTML = `
+        <h3>Cancelled</h3>
+        <p>${cancelledCount}</p>
+      `;
+      statsOverview.appendChild(cancelledItem);
+
+      // Tarjeta: INFORCE
+      const inforceItem = document.createElement("div");
+      inforceItem.className = "stats-item";
+      inforceItem.innerHTML = `
+        <h3>Inforce</h3>
+        <p>${inforceCount}</p>
+      `;
+      statsOverview.appendChild(inforceItem);
+
+      // Tarjeta: OTROS
+      const otrosItem = document.createElement("div");
+      otrosItem.className = "stats-item";
+      otrosItem.innerHTML = `
+        <h3>Otros</h3>
+        <p>${otrosCount}</p>
+      `;
+      statsOverview.appendChild(otrosItem);
+    }
+  </script>
+</body>
+</html>
