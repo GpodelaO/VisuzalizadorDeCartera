@@ -327,7 +327,7 @@
     <div class="stats-container">
       <h2>Resumen de Cartera</h2>
       <div class="stats-overview" id="statsOverview">
-        <!-- Tarjetas generadas dinámicamente (Total, Cancelled, Inforce, Otros) -->
+        <!-- Tarjetas generadas dinámicamente (Total, Canceladas, Vigentes, Otros) -->
       </div>
     </div>
 
@@ -381,12 +381,15 @@
     // URL de tu Google Sheet en CSV
     const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJXJVUj3lKzOGw0DQovIXuFBcONwFCsAB4-vI9XUzLry_R1iaM0QmXp4HqJD2GmVS0ML8ZFIJRiwrH/pub?gid=0&single=true&output=csv";
 
-    // Columnas a mostrar
+    // =============================================================================
+    // 1. AÑADIMOS LA COLUMNA "ULTIMO PAGO REALIZADO" A LAS COLUMNAS A MOSTRAR
+    // =============================================================================
     const columnsToDisplay = [
       "POLIZA",
       "CLIENTE",
       "RFC",
       "INICIO DE VIGENCIA",
+      "ULTIMO PAGO REALIZADO", // <-- Nueva columna
       "PRODUCTO",
       "ESTATUS",
       "FORMA DE PAGO",
@@ -402,6 +405,7 @@
       "CLIENTE": "CLIENTE",
       "RFC": "RFC",
       "INICIO DE VIGENCIA": "INICIO DE VIGENCIA",
+      "ULTIMO PAGO REALIZADO": "ULTIMO PAGO REALIZADO", // <-- Encabezado de la nueva columna
       "PRODUCTO": "PRODUCTO",
       "ESTATUS": "ESTATUS",
       "FORMA DE PAGO": "FORMA DE PAGO",
@@ -454,7 +458,6 @@
         header: true,
         complete: function(results) {
           const data = results.data;
-
           userData = data.filter(row => row["Contraseña"] === enteredPass);
 
           if (userData.length === 0) {
@@ -509,7 +512,7 @@
       updateDashboard();
     });
 
-    // ====== NUEVA FUNCIÓN: DESCARGAR LA TABLA COMO CSV ======
+    // ====== FUNCIÓN: DESCARGAR LA TABLA COMO CSV ======
     downloadBtn.addEventListener("click", () => {
       downloadCurrentDataAsCSV();
     });
@@ -523,7 +526,7 @@
       // 2) Agregamos cada fila de datos filtrados
       filteredData.forEach(row => {
         const rowStr = columnsToDisplay
-          .map(col => (row[col] || "").replace(/,/g, " ")) // Reemplaza comas en celdas
+          .map(col => (row[col] || "").replace(/,/g, " "))
           .join(",");
         csvContent += rowStr + "\n";
       });
@@ -581,7 +584,13 @@
       rows.forEach(row => {
         tbodyHTML += "<tr>";
         columnsToDisplay.forEach(col => {
-          tbodyHTML += `<td>${row[col] || ""}</td>`;
+          if (col === "ULTIMO PAGO REALIZADO") {
+            // Si no existe valor, se muestra "Sin registro"
+            const ultimoPago = row[col] ? row[col] : "Sin registro";
+            tbodyHTML += `<td>${ultimoPago}</td>`;
+          } else {
+            tbodyHTML += `<td>${row[col] || ""}</td>`;
+          }
         });
         tbodyHTML += "</tr>";
       });
@@ -645,5 +654,4 @@
   </script>
 </body>
 </html>
-
 
