@@ -327,7 +327,7 @@
     <div class="stats-container">
       <h2>Resumen de Cartera</h2>
       <div class="stats-overview" id="statsOverview">
-        <!-- Tarjetas generadas dinámicamente (Total, Canceladas, Vigentes, Otros) -->
+        <!-- Tarjetas generadas dinámicamente -->
       </div>
     </div>
 
@@ -362,8 +362,6 @@
         <input type="text" id="filterPoliza" placeholder="Ej. 123456" />
       </div>
       <button class="apply-filters-btn" id="applyFiltersBtn">Aplicar Filtros</button>
-
-      <!-- BOTÓN PARA DESCARGAR LA TABLA -->
       <button class="apply-filters-btn" id="downloadBtn" style="margin-left:10px;">
         Descargar Excel
       </button>
@@ -381,15 +379,13 @@
     // URL de tu Google Sheet en CSV
     const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJXJVUj3lKzOGw0DQovIXuFBcONwFCsAB4-vI9XUzLry_R1iaM0QmXp4HqJD2GmVS0ML8ZFIJRiwrH/pub?gid=0&single=true&output=csv";
 
-    // =============================================================================
-    // 1. AÑADIMOS LA COLUMNA "ULTIMO PAGO REALIZADO" A LAS COLUMNAS A MOSTRAR
-    // =============================================================================
+    // Columnas a mostrar
     const columnsToDisplay = [
       "POLIZA",
       "CLIENTE",
       "RFC",
       "INICIO DE VIGENCIA",
-      "ULTIMO PAGO REALIZADO", // <-- Nueva columna
+      "ULTIMO PAGO REALIZADO",
       "PRODUCTO",
       "ESTATUS",
       "FORMA DE PAGO",
@@ -399,13 +395,13 @@
       "MONEDA"
     ];
 
-    // Diccionario para renombrar encabezados
+    // Encabezados
     const columnHeaders = {
       "POLIZA": "PÓLIZA",
       "CLIENTE": "CLIENTE",
       "RFC": "RFC",
       "INICIO DE VIGENCIA": "INICIO DE VIGENCIA",
-      "ULTIMO PAGO REALIZADO": "ULTIMO PAGO REALIZADO", // <-- Encabezado de la nueva columna
+      "ULTIMO PAGO REALIZADO": "ULTIMO PAGO REALIZADO",
       "PRODUCTO": "PRODUCTO",
       "ESTATUS": "ESTATUS",
       "FORMA DE PAGO": "FORMA DE PAGO",
@@ -415,7 +411,7 @@
       "MONEDA": "MONEDA"
     };
 
-    // Referencias DOM
+    // DOM
     const ingresarBtn = document.getElementById("ingresarBtn");
     const userPass = document.getElementById("userPass");
     const tableContainer = document.getElementById("tableContainer");
@@ -423,26 +419,19 @@
     const errorMsg = document.getElementById("errorMsg");
     const dashboardContainer = document.getElementById("dashboardContainer");
     const welcomeMessage = document.getElementById("welcomeMessage");
-
-    // Filtros
     const filterEstatus = document.getElementById("filterEstatus");
     const filterFormaCobro = document.getElementById("filterFormaCobro");
     const filterConductoCobro = document.getElementById("filterConductoCobro");
     const filterProducto = document.getElementById("filterProducto");
     const filterPoliza = document.getElementById("filterPoliza");
     const applyFiltersBtn = document.getElementById("applyFiltersBtn");
-
-    // Stats
     const statsOverview = document.getElementById("statsOverview");
-
-    // BOTÓN DE DESCARGA
     const downloadBtn = document.getElementById("downloadBtn");
 
-    // Variables
     let userData = [];
     let filteredData = [];
 
-    // Al hacer clic en "Ingresar"
+    // LOGIN
     ingresarBtn.addEventListener("click", () => {
       const enteredPass = userPass.value.trim();
       if (!enteredPass) {
@@ -469,7 +458,6 @@
           }
 
           errorMsg.style.display = "none";
-
           const agentName = userData[0]["AGENTE"] || userData[0]["NOM_AGENTE"] || "Agente";
           welcomeMessage.textContent = `BIENVENID@ ${agentName}`;
 
@@ -489,10 +477,9 @@
       });
     });
 
-    // Al hacer clic en "Aplicar Filtros"
+    // FILTROS
     applyFiltersBtn.addEventListener("click", () => {
       filteredData = userData.slice();
-
       if (filterEstatus.value !== "Todos") {
         filteredData = filteredData.filter(row => row["ESTATUS"] === filterEstatus.value);
       }
@@ -512,43 +499,30 @@
       updateDashboard();
     });
 
-    // ====== FUNCIÓN: DESCARGAR LA TABLA COMO CSV ======
+    // DESCARGAR CSV
     downloadBtn.addEventListener("click", () => {
-      downloadCurrentDataAsCSV();
-    });
-
-    function downloadCurrentDataAsCSV() {
-      // 1) Construimos la primera fila con los encabezados
+      // Armar CSV
       let csvContent = columnsToDisplay
         .map(col => columnHeaders[col] || col)
         .join(",") + "\n";
-
-      // 2) Agregamos cada fila de datos filtrados
       filteredData.forEach(row => {
         const rowStr = columnsToDisplay
-          .map(col => (row[col] || "").replace(/,/g, " "))
+          .map(col => (row[col] || "").toString().replace(/,/g, " "))
           .join(",");
         csvContent += rowStr + "\n";
       });
-
-      // 3) Creamos un Blob con el contenido CSV
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
-
-      // 4) Creamos un enlace temporal para forzar la descarga
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", "cartera.csv");
       document.body.appendChild(link);
       link.click();
-
-      // 5) Limpiamos
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    }
-    // =========================================================
+    });
 
-    // Llenar <select> con valores únicos
+    // Rellenar selects
     function fillSelectOptions(dataArray, columnName, selectElement) {
       const uniqueValues = [...new Set(dataArray.map(row => row[columnName] || "").filter(Boolean))];
       uniqueValues.sort();
@@ -563,7 +537,7 @@
       });
     }
 
-    // Actualizar Dashboard
+    // Mostrar dashboard + tabla
     function updateDashboard() {
       dashboardContainer.style.display = "block";
       tableContainer.style.display = "block";
@@ -571,7 +545,7 @@
       updateStats(filteredData);
     }
 
-    // Actualizar la tabla
+    // Construir tabla
     function updateTable(rows) {
       let theadHTML = "<thead><tr>";
       columnsToDisplay.forEach(col => {
@@ -585,7 +559,6 @@
         tbodyHTML += "<tr>";
         columnsToDisplay.forEach(col => {
           if (col === "ULTIMO PAGO REALIZADO") {
-            // Si no existe valor, se muestra "Sin registro"
             const ultimoPago = row[col] ? row[col] : "Sin registro";
             tbodyHTML += `<td>${ultimoPago}</td>`;
           } else {
@@ -598,19 +571,18 @@
       dataTable.innerHTML = theadHTML + tbodyHTML;
     }
 
-    // Actualizar estadísticas
+    // Actualizar estadísticas (modificado para LAPSE)
     function updateStats(rows) {
       statsOverview.innerHTML = "";
 
       const totalPolizas = rows.length;
-
       let canceladasCount = 0;
       let vigentesCount = 0;
       let otrosCount = 0;
 
       rows.forEach(r => {
         const st = (r["ESTATUS"] || "").trim().toUpperCase();
-        if (st === "CANCELADA" || st === "CANCELLED") {
+        if (st === "CANCELADA" || st === "LAPSE" || st === "CANCELLED") {
           canceladasCount++;
         } else if (st === "VIGENTES" || st === "INFORCE") {
           vigentesCount++;
@@ -619,6 +591,7 @@
         }
       });
 
+      // Total
       const totalItem = document.createElement("div");
       totalItem.className = "stats-item";
       totalItem.innerHTML = `
@@ -627,14 +600,16 @@
       `;
       statsOverview.appendChild(totalItem);
 
+      // Canceladas/Lapse
       const canceladasItem = document.createElement("div");
       canceladasItem.className = "stats-item";
       canceladasItem.innerHTML = `
-        <h3>Canceladas</h3>
+        <h3>Canceladas/Lapse</h3>
         <p>${canceladasCount}</p>
       `;
       statsOverview.appendChild(canceladasItem);
 
+      // Vigentes
       const vigentesItem = document.createElement("div");
       vigentesItem.className = "stats-item";
       vigentesItem.innerHTML = `
@@ -643,6 +618,7 @@
       `;
       statsOverview.appendChild(vigentesItem);
 
+      // Otros
       const otrosItem = document.createElement("div");
       otrosItem.className = "stats-item";
       otrosItem.innerHTML = `
